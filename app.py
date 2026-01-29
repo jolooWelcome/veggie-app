@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. DESIGN & LOOK (Weinrot & Modern) ---
+# --- 1. DESIGN & LOOK ---
 st.set_page_config(page_title="Veggie-Genius", page_icon="🥗")
 st.markdown("""
     <style>
@@ -16,12 +16,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SETUP ---
-# Dein API Key
+# --- 2. SETUP (STABILE VERSION) ---
+# Dein Key bleibt gleich
 genai.configure(api_key="AIzaSyDp-jxQJZhK54rT2fvPduTAIZzKpHYb2Rc")
-model = genai.GenerativeModel('gemini-1.5-flash')
 
-# --- 3. OBERFLÄCHE (Ursprüngliche Inhalte) ---
+# WICHTIG: Wir nutzen 'gemini-pro', das ist die stabilste Einstellung für Cloud-Apps
+model = genai.GenerativeModel('gemini-pro')
+
+# --- 3. OBERFLÄCHE ---
 st.title("Veggie-Genius")
 st.write("Dein KI-Assistent für vegetarische Wochenpläne, Rezepte und Einkaufslisten.")
 st.divider()
@@ -59,12 +61,13 @@ if st.button("Jetzt detaillierten Wochenplan erstellen ✨"):
             
             Struktur der Antwort:
             1. WOCHENPLAN: Übersicht Montag bis Sonntag.
-            2. REZEPTE: Einfache Kochanleitungen für alle Mahlzeiten.
-            3. EINKAUFSLISTE: Sortiert nach Kategorien (Gemüse, Kühlregal, Vorratsschrank, Sonstiges).
+            2. REZEPTE: Einfache Kochanleitungen.
+            3. EINKAUFSLISTE: Sortiert nach Kategorien.
             """
             try:
                 response = model.generate_content(prompt)
                 st.success("Erfolg! Dein Plan ist bereit.")
                 st.markdown(response.text)
             except Exception as e:
-                st.error(f"Fehler: {e}")
+                # Zeigt uns den exakten Fehler an, falls Google blockiert
+                st.error(f"Google API Fehler: {e}")
