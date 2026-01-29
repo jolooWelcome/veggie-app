@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. DESIGN & LOOK ---
+# --- 1. DESIGN (Weinrot & Sauber) ---
 st.set_page_config(page_title="Veggie-Genius", page_icon="🥗")
 st.markdown("""
     <style>
@@ -16,31 +16,31 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SETUP (VERSION 1 STABLE) ---
-# Wir nutzen die stabilste Konfiguration für Streamlit Cloud
+# --- 2. KI SETUP ---
+# Dein funktionierender Key
 API_KEY = "AIzaSyDp-jxQJZhK54rT2fvPduTAIZzKpHYb2Rc"
 genai.configure(api_key=API_KEY)
 
-# Wir nutzen gemini-1.5-flash ohne Zusätze - das ist der aktuelle Cloud-Standard
+# Wir nutzen gemini-1.5-flash ohne "beta" im Namen für maximale Stabilität
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# --- 3. OBERFLÄCHE (ALLES WIEDER DA) ---
-st.title("🥗 Veggie-Genius")
-st.write("Dein persönlicher Assistent für gesunde, vegetarische Wochenplanung.")
+# --- 3. DIE URSPRÜNGLICHEN INHALTE ---
+st.title("Veggie-Genius")
+st.write("Dein Schweizer Assistent für gesunde, vegetarische Wochenplanung.")
 st.divider()
 
-st.subheader("Deine Details")
-wünsche = st.text_area("Was isst du gerne?", 
-                       placeholder="z.B. Pasta, Tacos, viel frisches Gemüse...", height=100)
+st.subheader("Deine Vorlieben")
+wünsche = st.text_area("Was möchtest du essen?", 
+                       placeholder="z.B. Pizza, Pasta, Tacos, viel frisches Gemüse...", height=100)
 
-allergien = st.text_input("Allergien oder Unverträglichkeiten?", 
-                          placeholder="z.B. Nüsse, Laktose oder 'Keine'")
+allergien = st.text_input("Allergien / Unverträglichkeiten", 
+                          placeholder="z.B. keine")
 
 col1, col2 = st.columns(2)
 with col1:
-    kcal = st.number_input("Kalorienziel pro Mahlzeit", min_value=200, value=600)
+    kcal = st.number_input("Kalorien pro Mahlzeit", min_value=200, value=600)
 with col2:
-    budget = st.number_input("Wochenbudget (CHF)", min_value=10, value=50)
+    budget = st.number_input("Budget (CHF)", min_value=10, value=50)
 
 mahlzeiten = st.multiselect("Welche Mahlzeiten?", 
                             ["Frühstück", "Mittagessen", "Nachtessen"], 
@@ -48,27 +48,28 @@ mahlzeiten = st.multiselect("Welche Mahlzeiten?",
 
 st.divider()
 
-# --- 4. GENERIERUNG ---
-if st.button("Jetzt meinen persönlichen Wochenplan erstellen ✨"):
+# --- 4. LOGIK ---
+if st.button("Wochenplan erstellen ✨"):
     if not wünsche:
-        st.warning("Bitte gib kurz deine Vorlieben ein!")
+        st.warning("Bitte gib kurz ein, was du gerne essen möchtest!")
     else:
         with st.spinner('KI erstellt deinen Plan...'):
             prompt = f"""
-            Erstelle einen vegetarischen Wochenplan für Jugendliche.
+            Erstelle einen vegetarischen Wochenplan für Jugendliche in der Schweiz.
             Wünsche: {wünsche}. Allergien: {allergien}. 
-            Max. {kcal} kcal pro Mahlzeit. Budget: {budget} CHF.
+            Kalorien: ca. {kcal} kcal pro Mahlzeit. Budget: {budget} CHF.
             Mahlzeiten: {mahlzeiten}.
-            Antworte bitte mit: 1. Wochenplan, 2. Rezepte, 3. Einkaufsliste (nach Kategorien).
+            
+            ANTWORTE GEGLIEDERT IN:
+            1. WOCHENPLAN (Tabelle Mo-So)
+            2. REZEPTE (Kurz und einfach)
+            3. EINKAUFSLISTE (Nach Kategorien sortiert)
             """
             try:
-                # Wir rufen die KI ohne Beta-Zusätze auf
+                # Hier nutzen wir den stabilen Aufruf
                 response = model.generate_content(prompt)
-                if response.text:
-                    st.success("Plan fertig!")
-                    st.markdown(response.text)
-                else:
-                    st.error("Die KI hat keine Antwort geliefert. Bitte versuche es erneut.")
+                st.success("Plan fertig!")
+                st.markdown(response.text)
             except Exception as e:
-                st.error(f"Hinweis: {e}")
-                st.info("Falls dieser Fehler bleibt: Erstelle bitte im Google AI Studio einen NEUEN Key. Manchmal werden Keys bei der ersten Nutzung in neuen Umgebungen blockiert.")
+                st.error(f"KI-Fehler: {e}")
+                st.info("Sollte der Fehler '404' bleiben, erstelle bitte kurz einen neuen Key im Google AI Studio.")
