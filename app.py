@@ -16,58 +16,59 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SETUP (STABILE VERSION) ---
-# Dein Key bleibt gleich
-genai.configure(api_key="AIzaSyDp-jxQJZhK54rT2fvPduTAIZzKpHYb2Rc")
+# --- 2. SETUP (VERSION 1 STABLE) ---
+# Wir nutzen die stabilste Konfiguration für Streamlit Cloud
+API_KEY = "AIzaSyDp-jxQJZhK54rT2fvPduTAIZzKpHYb2Rc"
+genai.configure(api_key=API_KEY)
 
-# WICHTIG: Wir nutzen 'gemini-pro', das ist die stabilste Einstellung für Cloud-Apps
-model = genai.GenerativeModel('gemini-pro')
+# Wir nutzen gemini-1.5-flash ohne Zusätze - das ist der aktuelle Cloud-Standard
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-# --- 3. OBERFLÄCHE ---
-st.title("Veggie-Genius")
-st.write("Dein KI-Assistent für vegetarische Wochenpläne, Rezepte und Einkaufslisten.")
+# --- 3. OBERFLÄCHE (ALLES WIEDER DA) ---
+st.title("🥗 Veggie-Genius")
+st.write("Dein persönlicher Assistent für gesunde, vegetarische Wochenplanung.")
 st.divider()
 
-wünsche = st.text_area("Was möchtest du diese Woche gerne essen?", 
-                       placeholder="z.B. Pasta-Gerichte, Tacos, viel frisches Gemüse...", height=100)
+st.subheader("Deine Details")
+wünsche = st.text_area("Was isst du gerne?", 
+                       placeholder="z.B. Pasta, Tacos, viel frisches Gemüse...", height=100)
 
-allergien = st.text_input("Hast du Allergien oder Unverträglichkeiten?", 
-                          placeholder="z.B. Nüsse, Laktose... (oder leer lassen)")
+allergien = st.text_input("Allergien oder Unverträglichkeiten?", 
+                          placeholder="z.B. Nüsse, Laktose oder 'Keine'")
 
-st.divider()
 col1, col2 = st.columns(2)
 with col1:
-    kcal = st.number_input("Kalorienziel pro Mahlzeit:", min_value=200, value=600, step=50)
+    kcal = st.number_input("Kalorienziel pro Mahlzeit", min_value=200, value=600)
 with col2:
-    budget = st.number_input("Max. Budget für die Woche (CHF):", min_value=10, value=60, step=5)
+    budget = st.number_input("Wochenbudget (CHF)", min_value=10, value=50)
 
-mahlzeiten = st.multiselect("Welche Mahlzeiten sollen geplant werden?", 
+mahlzeiten = st.multiselect("Welche Mahlzeiten?", 
                             ["Frühstück", "Mittagessen", "Nachtessen"], 
                             default=["Mittagessen", "Nachtessen"])
 
+st.divider()
+
 # --- 4. GENERIERUNG ---
-if st.button("Jetzt detaillierten Wochenplan erstellen ✨"):
+if st.button("Jetzt meinen persönlichen Wochenplan erstellen ✨"):
     if not wünsche:
-        st.warning("Bitte gib kurz deine Essenswünsche ein!")
+        st.warning("Bitte gib kurz deine Vorlieben ein!")
     else:
         with st.spinner('KI erstellt deinen Plan...'):
             prompt = f"""
-            Erstelle einen detaillierten vegetarischen Wochenplan für Jugendliche.
-            - Wünsche: {wünsche}
-            - Allergien: {allergien}
-            - Kalorien pro Mahlzeit: ca. {kcal} kcal
-            - Gesamtbudget für den Einkauf: {budget} CHF (Schweizer Preise)
-            - Mahlzeiten: {mahlzeiten}
-            
-            Struktur der Antwort:
-            1. WOCHENPLAN: Übersicht Montag bis Sonntag.
-            2. REZEPTE: Einfache Kochanleitungen.
-            3. EINKAUFSLISTE: Sortiert nach Kategorien.
+            Erstelle einen vegetarischen Wochenplan für Jugendliche.
+            Wünsche: {wünsche}. Allergien: {allergien}. 
+            Max. {kcal} kcal pro Mahlzeit. Budget: {budget} CHF.
+            Mahlzeiten: {mahlzeiten}.
+            Antworte bitte mit: 1. Wochenplan, 2. Rezepte, 3. Einkaufsliste (nach Kategorien).
             """
             try:
+                # Wir rufen die KI ohne Beta-Zusätze auf
                 response = model.generate_content(prompt)
-                st.success("Erfolg! Dein Plan ist bereit.")
-                st.markdown(response.text)
+                if response.text:
+                    st.success("Plan fertig!")
+                    st.markdown(response.text)
+                else:
+                    st.error("Die KI hat keine Antwort geliefert. Bitte versuche es erneut.")
             except Exception as e:
-                # Zeigt uns den exakten Fehler an, falls Google blockiert
-                st.error(f"Google API Fehler: {e}")
+                st.error(f"Hinweis: {e}")
+                st.info("Falls dieser Fehler bleibt: Erstelle bitte im Google AI Studio einen NEUEN Key. Manchmal werden Keys bei der ersten Nutzung in neuen Umgebungen blockiert.")
