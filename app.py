@@ -2,8 +2,8 @@ import streamlit as st
 import requests
 import json
 
-# --- 1. DESIGN & LOOK (Weinrot) ---
-st.set_page_config(page_title="Veggie-Genius", page_icon="🥗")
+# --- 1. DESIGN ---
+st.set_page_config(page_title="Veggie-Genius GPT", page_icon="🥗")
 st.markdown("""
     <style>
     .stApp { background-color: #ffffff; }
@@ -17,58 +17,53 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SETUP (NEUER KEY & DIREKTE WEB-SCHNITTSTELLE) ---
-API_KEY = "AIzaSyCaeXliVeWdH4KVGex2oSnNUhK3JQSTMsw"
-# Wir nutzen die REST-Schnittstelle, um die "404 Library" Fehler zu umgehen
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+# --- 2. SETUP OPENAI ---
+# ERSETZE DIESEN KEY DURCH DEINEN SK-... KEY
+OPENAI_API_KEY = "DEIN_NEUER_OPENAI_KEY_HIER"
 
-# --- 3. OBERFLÄCHE (URSPIEGLICHE INHALTE) ---
-st.title("Veggie-Genius")
+# --- 3. OBERFLÄCHE ---
+st.title("Veggie-Genius (GPT Edition)")
 st.write("Dein Schweizer Assistent für gesunde, vegetarische Wochenplanung.")
 st.divider()
 
-st.subheader("Deine Vorlieben")
-wünsche = st.text_area("Was möchtest du essen?", 
-                       placeholder="z.B. Pizza, Pasta, Tacos...", height=100)
-
+wünsche = st.text_area("Was möchtest du essen?", placeholder="z.B. Pizza, Pasta, Tacos...", height=100)
 allergien = st.text_input("Allergien / Unverträglichkeiten", placeholder="z.B. keine")
 
-st.divider()
 col1, col2 = st.columns(2)
 with col1:
     kcal = st.number_input("Kalorien pro Mahlzeit", min_value=200, value=600)
 with col2:
     budget = st.number_input("Budget (CHF)", min_value=10, value=50)
 
-mahlzeiten = st.multiselect("Welche Mahlzeiten?", 
-                            ["Frühstück", "Mittagessen", "Nachtessen"], 
-                            default=["Mittagessen", "Nachtessen"])
-
-st.divider()
-
-# --- 4. LOGIK ---
+# --- 4. LOGIK (CHATGPT ANFRAGE) ---
 if st.button("Wochenplan jetzt erstellen ✨"):
     if not wünsche:
         st.warning("Bitte gib kurz deine Vorlieben ein!")
+    elif OPENAI_API_KEY == "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":
+        st.error("Bitte füge deinen OpenAI Key (sk-...) oben im Code ein!")
     else:
-        with st.spinner('KI erstellt deinen Plan via Direktleitung...'):
-            payload = {
-                "contents": [{
-                    "parts": [{"text": f"Erstelle einen vegetarischen Wochenplan für Jugendliche in der Schweiz. Wünsche: {wünsche}. Allergien: {allergien}. Kalorien: {kcal}. Budget: {budget} CHF. Mahlzeiten: {mahlzeiten}. Antworte mit: 1. Plan, 2. Rezepte, 3. Einkaufsliste."}]
-                }]
+        with st.spinner('ChatGPT erstellt deinen Plan...'):
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {OPENAI_API_KEY}"
             }
-            headers = {'Content-Type': 'application/json'}
+            payload = {
+                "model": "gpt-3.5-turbo", # Kostengünstig und schnell
+                "messages": [
+                    {"role": "system", "content": "Du bist ein Koch-Assistent für Jugendliche in der Schweiz."},
+                    {"role": "user", "content": f"Erstelle einen vegetarischen Wochenplan. Wünsche: {wünsche}. Allergien: {allergien}. Kalorien: {kcal}. Budget: {budget} CHF. Antworte mit: 1. Plan, 2. Rezepte, 3. Einkaufsliste."}
+                ]
+            }
             
             try:
-                # Wir schicken die Anfrage direkt übers Web (umgeht lokale 404 Fehler)
-                response = requests.post(API_URL, headers=headers, data=json.dumps(payload), timeout=60)
+                response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+                result = response.json()
                 
                 if response.status_code == 200:
-                    result = response.json()
-                    answer = result['candidates'][0]['content']['parts'][0]['text']
+                    answer = result['choices'][0]['message']['content']
                     st.success("Erfolg! Dein Plan ist fertig.")
                     st.markdown(answer)
                 else:
-                    st.error(f"Google meldet Fehler {response.status_code}. Details: {response.text}")
+                    st.error(f"Fehler von OpenAI: {result['error']['message']}")
             except Exception as e:
                 st.error(f"Verbindungsfehler: {e}")
