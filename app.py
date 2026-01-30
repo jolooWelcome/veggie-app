@@ -24,7 +24,7 @@ st.markdown("""
 
 # --- 2. SETUP OPENAI ---
 # Dein neuer Key ist hier integriert
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 
 # --- 3. OBERFLÄCHE ---
 st.title("🥗 Veggie-Genius")
@@ -85,3 +85,4 @@ if st.button("Wochenplan erstellen ✨"):
                         st.info("Hinweis: Du musst bei OpenAI ein kleines Guthaben (z.B. 5 CHF) aufladen, um den Key zu nutzen.")
             except Exception as e:
                 st.error(f"Verbindungsfehler: {e}")
+
