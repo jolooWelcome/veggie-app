@@ -1,23 +1,27 @@
 import streamlit as st
 from openai import OpenAI
 
-# --- 1. DESIGN ---
+# --- 1. DESIGN-FIX (SCHRIFTFARBE ERZWINGEN) ---
 st.set_page_config(page_title="VeggieVibe", page_icon="🥦")
 
 st.markdown("""
     <style>
+    /* Hintergrund hellgrau */
     .stApp { background-color: #f8f9fa; }
-    h1 { color: #722F37 !important; }
+    /* Alle Texte in der App dunkelgrau/schwarz machen */
+    .stApp p, .stApp div, .stApp span, .stApp li {
+        color: #31333F !important;
+    }
+    h1, h2, h3 { color: #722F37 !important; }
     .stButton>button { background-color: #722F37 !important; color: white !important; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SICHERHEITS-CHECK ---
-# Wir fragen den Nutzer in der Seitenleiste nach dem Key
+# --- 2. SEITENLEISTE ---
 with st.sidebar:
     st.title("Sicherheit")
     user_api_key = st.text_input("OpenAI API Key hier einfügen:", type="password")
-    st.info("Dein Key wird nicht gespeichert und nur für diese Sitzung genutzt.")
+    st.info("Dein Key wird nur für diese Sitzung genutzt.")
 
 # --- 3. OBERFLÄCHE ---
 st.title("🥦 VeggieVibe")
@@ -39,17 +43,21 @@ if st.button("🚀 Plan jetzt erstellen"):
     else:
         with st.spinner('KI kocht gerade...'):
             try:
-                # Wir nutzen den Key, den du oben im Feld eingibst
                 client = OpenAI(api_key=user_api_key)
                 
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
-                        {"role": "system", "content": "Du bist ein Veggie-Koch-Profi für Jugendliche."},
-                        {"role": "user", "content": f"Erstelle Plan für: {wünsche}, Budget: {budget}CHF, Kalorien: {kalorien}."}
+                        {"role": "system", "content": "Du bist ein Veggie-Koch-Profi für Jugendliche. Antworte immer auf Deutsch."},
+                        {"role": "user", "content": f"Erstelle einen vegetarischen Plan für: {wünsche}. Budget: {budget} CHF, Kalorien: {kalorien}."}
                     ]
                 )
+                
+                # Hier wird das Ergebnis angezeigt
                 st.success("Fertig!")
-                st.write(response.choices[0].message.content)
+                st.markdown("---")
+                # Wir nutzen Markdown, um sicherzugehen, dass es formatiert ist
+                st.markdown(f"### Dein Plan:\n{response.choices[0].message.content}")
+                
             except Exception as e:
-                st.error(f"Fehler: {e}. Prüfe, ob dein Key Guthaben hat!")
+                st.error(f"Fehler: {e}")
