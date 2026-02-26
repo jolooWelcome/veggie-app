@@ -1,7 +1,7 @@
 import streamlit as st
 from openai import OpenAI
 
-# --- 1. DESIGN & HARMONISIERUNG (CSS) ---
+# --- 1. DESIGN & KONSTRUKTION (CSS) ---
 st.set_page_config(page_title="Sophis Veggie APP", page_icon="🥦", layout="centered")
 
 st.markdown("""
@@ -9,7 +9,7 @@ st.markdown("""
     /* Hintergrund */
     .stApp { background-color: #f4f4f4; }
     
-    /* TITEL: RIESIG & WEINROT */
+    /* TITEL */
     .main-title { 
         font-size: 4.5rem !important; 
         color: #722F37 !important; 
@@ -28,38 +28,18 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* SPEZIELLE ÜBERSCHRIFT FÜR ERLAUBTE NAHRUNGSMITTEL (SCHWARZ) */
-    .food-header {
-        color: black !important;
-        font-weight: bold !important;
-        font-size: 1.2rem !important;
-        margin-top: 20px;
-    }
-
-    /* SCHWARZE EINGABEFELDER (Inputs) */
+    /* SCHWARZE EINGABEFELDER mit WEISSER SCHRIFT */
     .stTextArea textarea, .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
         background-color: #31333F !important;
         color: white !important;
         border: 2px solid #722F37 !important;
         border-radius: 8px !important;
-        font-size: 1rem !important;
     }
 
-    /* FIX: AUSGEWÄHLTE MAHLZEIT IM FELD ZWINGEND WEISS */
-    div[data-baseweb="select"] span, 
-    div[data-baseweb="select"] div[aria-selected="true"],
-    div[data-baseweb="select"] div {
-        color: white !important;
+    /* ZWECKGEBUNDENE SCHRIFTFARBE DER KI-ANTWORT: IMMER SCHWARZ */
+    .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: black !important;
     }
-
-    /* RADIO-BUTTONS */
-    div[role="radiogroup"] {
-        background-color: #31333F;
-        padding: 10px;
-        border-radius: 8px;
-        border: 2px solid #722F37;
-    }
-    div[role="radiogroup"] label p { color: white !important; }
 
     /* GELBER ZAUBER-BUTTON */
     .stButton>button { 
@@ -74,7 +54,7 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
-    /* KOMPAKTE LEBENSMITTEL-LISTE (SCHWARZE SCHRIFT) */
+    /* Kompakte Karten */
     .small-food-card {
         background: white;
         padding: 5px 10px;
@@ -82,20 +62,14 @@ st.markdown("""
         border-left: 3px solid #722F37;
         margin-bottom: 3px;
         font-size: 0.85rem;
-        color: black !important; /* Zwingend Schwarz für Sophia */
-        font-weight: 500;
-    }
-
-    /* FIX FÜR DAS EINGABEFELD IN DER LISTE (SCHWARZ) */
-    .food-list-input input {
         color: black !important;
-        background-color: white !important;
-        border: 1px solid #722F37 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. INITIALISIERUNG DER ERLAUBTEN LISTE ---
+# --- 2. INITIALISIERUNG SESSION STATE (Speicher für Interaktion) ---
+if 'last_response' not in st.session_state:
+    st.session_state.last_response = None
 if 'allowed_foods' not in st.session_state:
     st.session_state.allowed_foods = [
         "Weissbrot, Toastbrot (Frisch)", "Reis, Mais, Hirse", "Nudeln (ohne Ei)", 
@@ -106,7 +80,7 @@ if 'allowed_foods' not in st.session_state:
         "Erbsen", "Äpfel/ Birnen (geschält)", "Melone, Trauben (weiss)", "Mango/Heidelbeere"
     ]
 
-# --- 3. OBERFLÄCHE (UI) ---
+# --- 3. OBERFLÄCHE ---
 st.markdown('<h1 class="main-title">Sophis Veggie APP</h1>', unsafe_allow_html=True)
 
 with st.container():
@@ -119,51 +93,66 @@ with st.container():
         plan_art = st.radio("Plan-Modus:", ["Einmalige Mahlzeit", "Wochenplan (7 Tage)"])
     
     with col2:
-        kalorien = st.number_input("Kalorienziel:", value=600)
+        kalorien = st.number_input("Kalorienziel pro Mahlzeit:", value=600)
         budget = st.number_input("Budget (CHF):", value=20)
 
-# --- 4. KI-LOGIK (DER WITZIGE VEGGIE-GUARD) ---
+# --- 4. KI-LOGIK MIT INTERAKTIONS-FLOW ---
 if st.button("✨ KI Menü zaubern"):
     try:
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
         prompt = f"""
-        Du bist Sophis persönlicher KI-Buddy (16 Jahre alt, locker & witzig).
-        STRENGE REGELN:
-        1. Rezepte NUR aus 'Wünsche' oder 'Kühlschrank'.
-        2. Check gegen VIP-Liste: {', '.join(st.session_state.allowed_foods)}. 
-           Falls was fehlt -> witzige Warnung!
-        3. Fleisch/Fisch? -> Absolutes Veto im Teenie-Slang!
-        4. Erstelle 3 Menü-Optionen ({plan_art}) für {mahlzeit_typ} inkl. Zubereitung & Einkaufsliste.
+        Du bist Sophis persönlicher KI-Buddy (16, locker & witzig). 
+        STRENGE REGEL: Verwende AUSSCHLIESSLICH Zutaten aus 'Wünsche' oder 'Kühlschrank'.
+        Checke gegen VIP-Liste: {', '.join(st.session_state.allowed_foods)}. 
+        Wording: Locker, witzig, Emojis.
+        
+        AUFTRAG:
+        Generiere 3 Menü-Vorschläge. 
+        Für JEDEN Vorschlag erstelle: 
+        1. Name des Gerichts
+        2. Das detaillierte Rezept & Zubereitung
+        3. Die Einkaufsliste mit Preisen in CHF.
+        
+        Daten: Wünsche: {wünsche}, Kühlschrank: {kuehlschrank}, Budget: {budget} CHF, Kcal: {kalorien}.
         """
-        with st.spinner('🚀 Sophia, die KI poliert die Rezepte...'):
+        with st.spinner('🚀 Sophia, die KI stellt die Optionen zusammen...'):
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o", # Wir nutzen das stärkere Modell für bessere Struktur
                 messages=[{"role": "user", "content": prompt}]
             )
-            st.success("✅ Check erledigt! Hier sind deine Optionen:")
-            st.markdown(response.choices[0].message.content)
+            st.session_state.last_response = response.choices[0].message.content
+            st.rerun() # Seite neu laden, um Buttons anzuzeigen
     except Exception as e:
         st.error(f"Oje, Fehler: {e}")
 
-st.markdown("---")
-
-# --- 5. ERLAUBTE LISTE ANZEIGEN (SCHWARZE SCHRIFT) ---
-st.markdown('<p class="food-header">🛒 Meine erlaubten Nahrungsmittel</p>', unsafe_allow_html=True)
-
-# Das Eingabefeld für neue Nahrungsmittel in Weiß/Schwarz
-st.markdown('<div class="food-list-input">', unsafe_allow_html=True)
-new_food = st.text_input("Nahrungsmittel ergänzen:", placeholder="Zutat tippen...", label_visibility="collapsed")
-st.markdown('</div>', unsafe_allow_html=True)
-
-if st.button("➕ Hinzufügen"):
-    if new_food and new_food not in st.session_state.allowed_foods:
-        st.session_state.allowed_foods.append(new_food)
+# Wenn ein Resultat da ist, zeigen wir es an
+if st.session_state.last_response:
+    st.markdown("---")
+    st.success("✅ Deine Optionen sind bereit!")
+    
+    # Wir zeigen erst mal nur die Übersicht an (vereinfacht für die Demo)
+    # Profi-Tipp: Hier könnte man den Text splitten. Für den User zeigen wir jetzt alles an, 
+    # fügen aber die interaktive Bestätigung ein.
+    
+    st.markdown("### Hier sind deine Gourmet-Ideen:")
+    st.write(st.session_state.last_response)
+    
+    st.markdown("---")
+    st.markdown("### 🛠️ Was soll ich als Nächstes tun?")
+    col_btn1, col_btn2 = st.columns(2)
+    
+    if col_btn1.button("📑 Einkaufsliste als Text zeigen"):
+        st.info("Kopiere die Liste oben einfach in deine Notizen-App!")
+        
+    if col_btn2.button("👨‍🍳 Neues Menü würfeln"):
+        st.session_state.last_response = None
         st.rerun()
 
-# Kompakte Anzeige der Liste in SCHWARZ
+st.markdown("---")
+st.markdown("#### 🛒 Meine erlaubten Nahrungsmittel")
 for food in st.session_state.allowed_foods:
     cols = st.columns([10, 1])
     cols[0].markdown(f"<div class='small-food-card'>{food}</div>", unsafe_allow_html=True)
-    if cols[1].button("❌", key=food):
+    if cols[1].button("❌", key=f"del_{food}"):
         st.session_state.allowed_foods.remove(food)
         st.rerun()
