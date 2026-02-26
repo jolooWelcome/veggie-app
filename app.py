@@ -4,7 +4,7 @@ from openai import OpenAI
 # --- 1. DESIGN & KONFIGURATION (MOBILE FIRST) ---
 st.set_page_config(page_title="Sophis Veggie APP", page_icon="🥑", layout="centered")
 
-# Weinrot & Grau Styling mit gelbem Button-Akzent
+# Weinrot, Grau & Gelber Akzent + Miniatur-Design für die Liste
 st.markdown("""
     <style>
     .stApp { background-color: #f4f4f4; }
@@ -20,12 +20,12 @@ st.markdown("""
         border-radius: 8px !important;
     }
     
-    /* DER GELBE BUTTON (Anpassung) */
+    /* DER GELBE BUTTON (Hauptaktion) */
     .stButton>button { 
-        background-color: #FFD700 !important; /* Gelb/Gold */
-        color: #31333F !important; /* Dunkle Schrift für bessere Lesbarkeit */
+        background-color: #FFD700 !important; 
+        color: #31333F !important; 
         border-radius: 12px; 
-        border: 2px solid #722F37; /* Weinroter Rand für den Kontrast */
+        border: 2px solid #722F37; 
         height: 3.5em; 
         width: 100%; 
         font-weight: bold;
@@ -33,18 +33,27 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
-    .food-card {
+    /* KOMPAKTE LEBENSMITTEL-LISTE (Anpassung) */
+    .small-food-card {
         background: white;
-        padding: 10px;
-        border-radius: 10px;
-        border-left: 5px solid #722F37;
-        margin-bottom: 5px;
-        font-size: 0.9rem;
+        padding: 5px 10px;
+        border-radius: 6px;
+        border-left: 3px solid #722F37;
+        margin-bottom: 3px;
+        font-size: 0.8rem; /* Kleinere Schrift */
+        color: #4b5563;
+    }
+
+    /* Kleinere Buttons für die Liste */
+    div[data-testid="column"] button {
+        padding: 2px 5px !important;
+        font-size: 0.7rem !important;
+        height: auto !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. LOGIK FÜR DIE LEBENSMITTELLISTE (Sophias Liste) ---
+# --- 2. INITIALISIERUNG DER VOLLSTÄNDIGEN LISTE ---
 if 'allowed_foods' not in st.session_state:
     st.session_state.allowed_foods = [
         "Weissbrot, Toastbrot (Frisch)", "Reis, Mais, Hirse", "Nudeln (ohne Ei)", 
@@ -55,7 +64,7 @@ if 'allowed_foods' not in st.session_state:
         "Erbsen", "Äpfel/ Birnen (geschält)", "Melone, Trauben (weiss)", "Mango/Heidelbeere"
     ]
 
-# --- 3. OBERFLÄCHE (UI) ---
+# --- 3. HAUPTOBERFLÄCHE ---
 st.title("🥑 Sophis Veggie APP")
 
 with st.container():
@@ -71,22 +80,16 @@ with st.container():
         kalorien = st.number_input("Kalorienziel:", value=600)
         budget = st.number_input("Budget (CHF):", value=20)
 
-# --- 4. KI-AKTION ---
+# --- 4. KI-AKTION (Der gelbe Button) ---
 if st.button("✨ KI Menü zaubern"):
     try:
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-        
         prompt = f"""
         Du bist Sophis persönlicher KI-Koch. Erstelle ein vegetarisches Menü ({plan_art}) für {mahlzeit_typ}.
-        WÜNSCHE: {wünsche}
-        UNVERTRÄGLICHKEITEN: {unvertraeglichkeiten}
-        BUDGET: {budget} CHF
-        KALORIEN: {kalorien} kcal pro Mahlzeit.
+        WÜNSCHE: {wünsche}, UNVERTRÄGLICHKEITEN: {unvertraeglichkeiten}, BUDGET: {budget} CHF, KALORIEN: {kalorien} kcal.
         NUTZE AUSSCHLIESSLICH ODER BEVORZUGT DIESE LEBENSMITTEL: {', '.join(st.session_state.allowed_foods)}
-        
         Wording: Motivierend, frisch und klar.
         """
-        
         with st.spinner('Sophia, dein gelber Glücksbutton arbeitet...'):
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -99,20 +102,20 @@ if st.button("✨ KI Menü zaubern"):
 
 st.markdown("---")
 
-# --- 5. INTERAKTIVE LISTE: WAS DARF SOPHIA ESSEN? ---
-st.subheader("🛒 Erlaubte Lebensmittel")
+# --- 5. KOMPAKTE LISTE: MEINE ERLAUBTEN NAHRUNGSMITTEL ---
+st.markdown("#### 🛒 Erlaubte Nahrungsmittel (kompakt)")
 
-# Neues Lebensmittel hinzufügen
-new_food = st.text_input("Liste ergänzen:", placeholder="Zutat tippen...")
+# Eingabe für neue Lebensmittel (ebenfalls kompakt)
+new_food = st.text_input("Liste ergänzen:", placeholder="Zutat...", label_visibility="collapsed")
 if st.button("➕ Zutat hinzufügen"):
     if new_food and new_food not in st.session_state.allowed_foods:
         st.session_state.allowed_foods.append(new_food)
         st.rerun()
 
-# Liste anzeigen
+# Anzeige der Liste in kleinerer Schrift
 for food in st.session_state.allowed_foods:
-    cols = st.columns([5, 1])
-    cols[0].markdown(f"<div class='food-card'>{food}</div>", unsafe_allow_html=True)
-    if cols[1].button("🗑️", key=food):
+    cols = st.columns([10, 1]) # Viel Platz für Text, wenig für den Button
+    cols[0].markdown(f"<div class='small-food-card'>{food}</div>", unsafe_allow_html=True)
+    if cols[1].button("❌", key=food): # Kleineres X statt Papierkorb für Platzersparnis
         st.session_state.allowed_foods.remove(food)
         st.rerun()
