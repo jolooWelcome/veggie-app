@@ -1,15 +1,14 @@
 import streamlit as st
 from openai import OpenAI
 
-# --- 1. DESIGN & KONFIGURATION ---
+# --- 1. DESIGN & VIBE-CHECK (CSS) ---
 st.set_page_config(page_title="Sophis Veggie APP", page_icon="🥑", layout="centered")
 
-# CSS für Weinrot, Grau, Gelben Button und "Black Fields" mit weißer Schrift
 st.markdown("""
     <style>
     .stApp { background-color: #f4f4f4; }
     
-    /* Allgemeine Schriftfarbe */
+    /* Haupt-Schriftfarben */
     .stApp p, .stApp div, .stApp span, .stApp li, .stApp label { 
         color: #31333F !important; 
         font-family: 'Inter', sans-serif;
@@ -17,7 +16,7 @@ st.markdown("""
     
     h1, h2, h3 { color: #722F37 !important; text-align: center; }
     
-    /* "BLACK FIELDS": Dunkle Eingabefelder mit weißer Schrift */
+    /* BLACK FIELDS: Dunkle Inputs, weiße Schrift */
     .stTextArea textarea, .stTextInput input, .stNumberInput input {
         background-color: #31333F !important;
         color: white !important;
@@ -25,7 +24,19 @@ st.markdown("""
         border-radius: 8px !important;
     }
 
-    /* Gelber Zauber-Button */
+    /* FIX: Auch Auswahlfelder (Select/Radio) weiß machen */
+    div[data-baseweb="select"] > div, div[role="radiogroup"] label p {
+        color: white !important;
+        background-color: #31333F !important;
+    }
+    div[role="radiogroup"] {
+        background-color: #31333F;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #722F37;
+    }
+
+    /* GELBER ZAUBER-BUTTON */
     .stButton>button { 
         background-color: #FFD700 !important; 
         color: #31333F !important; 
@@ -38,7 +49,7 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
-    /* Kompakte Lebensmittel-Karten */
+    /* Kompakte Karten */
     .small-food-card {
         background: white;
         padding: 5px 10px;
@@ -46,12 +57,11 @@ st.markdown("""
         border-left: 3px solid #722F37;
         margin-bottom: 3px;
         font-size: 0.8rem;
-        color: #4b5563;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. INITIALISIERUNG DER NAHRUNGSMITTEL ---
+# --- 2. DEINE ERLAUBTE LISTE (DIE VIP-ZUTATEN) ---
 if 'allowed_foods' not in st.session_state:
     st.session_state.allowed_foods = [
         "Weissbrot, Toastbrot (Frisch)", "Reis, Mais, Hirse", "Nudeln (ohne Ei)", 
@@ -62,70 +72,58 @@ if 'allowed_foods' not in st.session_state:
         "Erbsen", "Äpfel/ Birnen (geschält)", "Melone, Trauben (weiss)", "Mango/Heidelbeere"
     ]
 
-# --- 3. HAUPTOBERFLÄCHE ---
+# --- 3. OBERFLÄCHE ---
 st.title("🥑 Sophis Veggie APP")
 
 with st.container():
-    wünsche = st.text_area("Was möchtest du essen?", placeholder="z.B. Nudeln mit Gemüse...")
-    kuehlschrank = st.text_area("Habe ich noch im Kühlschrank:", placeholder="z.B. Brokkoli, Frischkäse...")
-    unvertraeglichkeiten = st.text_input("Unverträglichkeiten:", placeholder="Zusätzliche Infos...")
+    wünsche = st.text_area("Was möchtest du essen?", placeholder="z.B. Nudeln...")
+    kuehlschrank = st.text_area("Habe ich noch im Kühlschrank:", placeholder="z.B. Zuccini...")
     
     col1, col2 = st.columns(2)
     with col1:
-        mahlzeit_typ = st.selectbox("Mahlzeit auswählen:", ["Morgenessen", "Mittagessen", "Nachtessen"])
-        plan_art = st.radio("Zeitraum:", ["Einmalige Mahlzeit", "Wochenplan (7 Tage)"])
+        st.markdown("<p style='color:#722F37; font-weight:bold;'>Mahlzeiten anpassen:</p>", unsafe_allow_html=True)
+        mahlzeit_typ = st.selectbox("Wann willst du essen?", ["Morgenessen", "Mittagessen", "Nachtessen"], label_visibility="collapsed")
+        plan_art = st.radio("Plan-Modus:", ["Einmalige Mahlzeit", "Wochenplan (7 Tage)"])
     
     with col2:
         kalorien = st.number_input("Kalorienziel:", value=600)
         budget = st.number_input("Budget (CHF):", value=20)
 
-# --- 4. KI-LOGIK (STRENGER FILTER) ---
+# --- 4. KI-LOGIK (DER WITZIGE VEGGIE-GUARD) ---
 if st.button("✨ KI Menü zaubern"):
     try:
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
         
-        # Die Anweisung wurde verschärft: NUR die genannten Zutaten verwenden
         prompt = f"""
-        Du bist Sophis persönlicher KI-Koch. Erstelle ein vegetarisches Menü ({plan_art}) für {mahlzeit_typ}.
+        Du bist Sophis persönlicher KI-Buddy und Profi-Gourmet-Coach. Sophia ist 16, also rede locker, witzig und benutze Emojis.
         
-        WICHTIGSTE REGEL: Verwende für die Rezepte AUSSCHLIESSLICH Zutaten aus diesen zwei Listen:
-        1. WÜNSCHE: {wünsche}
-        2. KÜHLSCHRANK: {kuehlschrank}
-        (Salz, Wasser und Olivenöl sind als Basis immer erlaubt).
+        DEIN AUFTRAG:
+        1. Checke, ob Zutaten in 'Wünsche' oder 'Kühlschrank' NICHT auf dieser Liste stehen: {', '.join(st.session_state.allowed_foods)}. 
+           Falls ja, weise Sophia am Anfang witzig darauf hin (z.B. '🚨 Alarm! [Zutat] ist ein VIP-Verstoß!').
+        2. Checke streng, ob sie Fleisch oder Fisch eingeplant hat. Falls ja, sag ihr witzig, dass das hier eine Veggie-Zone ist!
+        3. Erstelle MINDESTENS 3 verschiedene Menü-Vorschläge ({plan_art}) nur aus den erlaubten/vorhandenen Sachen.
+        4. Gib für jeden Vorschlag die Zubereitung und eine Einkaufsliste an.
         
-        Berücksichtige zudem:
-        - UNVERTRÄGLICHKEITEN: {unvertraeglichkeiten}
-        - BUDGET: {budget} CHF
-        - KALORIEN: {kalorien} kcal.
-        
-        STRUKTUR DER ANTWORT:
-        1. 🍽️ MENÜ-VORSCHLAG (Name, Zutaten, Anleitung)
-        2. 🛒 EINKAERFSLISTE (Was muss noch gekauft werden, um die Wünsche zu erfüllen?)
+        EINGABEN:
+        Wünsche: {wünsche}
+        Kühlschrank: {kuehlschrank}
+        Budget: {budget} CHF | Kalorien: {kalorien}
         """
         
-        with st.spinner('Sophia, die KI filtert deine Zutaten...'):
+        with st.spinner('🚀 Sophia, die KI checkt deine Vorräte und kocht digital...'):
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}]
             )
-            st.success("Dein Gourmet-Plan & Einkaufsliste sind bereit!")
+            st.success("✅ Check erledigt! Hier sind deine Gourmet-Optionen:")
             st.markdown("---")
             st.markdown(response.choices[0].message.content)
     except Exception as e:
-        st.error(f"Fehler: {e}")
+        st.error(f"Oje, Technik-Schluckauf: {e}")
 
 st.markdown("---")
-
-# --- 5. KOMPAKTE LISTE: MEINE ERLAUBTEN NAHRUNGSMITTEL ---
-st.markdown("#### 🛒 Meine erlaubten Nahrungsmittel (Referenz)")
-
-new_food = st.text_input("Liste ergänzen:", placeholder="Zutat...", label_visibility="collapsed")
-if st.button("➕ Hinzufügen"):
-    if new_food and new_food not in st.session_state.allowed_foods:
-        st.session_state.allowed_foods.append(new_food)
-        st.rerun()
-
-# Kompakte Anzeige der Liste
+# --- 5. ERLAUBTE LISTE ANZEIGEN (KOMPAKT) ---
+st.markdown("#### 🛒 Deine VIP-Lebensmittel")
 for food in st.session_state.allowed_foods:
     cols = st.columns([10, 1])
     cols[0].markdown(f"<div class='small-food-card'>{food}</div>", unsafe_allow_html=True)
