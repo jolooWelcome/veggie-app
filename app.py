@@ -1,88 +1,55 @@
 import streamlit as st
-import requests
-import json
+from openai import OpenAI
 
-# --- 1. DESIGN & LOOK (Weinrot) ---
-st.set_page_config(page_title="Veggie-Genius", page_icon="🥗")
+# --- 1. DESIGN ---
+st.set_page_config(page_title="VeggieVibe", page_icon="🥦")
 
 st.markdown("""
     <style>
-    .stApp { background-color: #ffffff; }
-    h1, h2, h3 { color: #800020 !important; }
-    .stButton>button { 
-        background-color: #800020; color: white !important; 
-        border-radius: 20px; border: none; height: 3.5em; width: 100%; font-weight: bold;
-    }
-    .stButton>button:hover { background-color: #a00028; border: none; }
-    label { font-weight: bold !important; font-size: 1.1rem !important; color: #333 !important; }
-    /* Eingabefelder Styling */
-    .stTextInput>div>div>input, .stTextArea>div>div>textarea {
-        background-color: #fdfdfd;
-    }
+    .stApp { background-color: #f8f9fa; }
+    h1 { color: #722F37 !important; }
+    .stButton>button { background-color: #722F37 !important; color: white !important; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SETUP OPENAI ---
-# Dein neuer Key ist hier integriert
-OPENAI_API_KEY = "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"
+# --- 2. SICHERHEITS-CHECK ---
+# Wir fragen den Nutzer in der Seitenleiste nach dem Key
+with st.sidebar:
+    st.title("Sicherheit")
+    user_api_key = st.text_input("OpenAI API Key hier einfügen:", type="password")
+    st.info("Dein Key wird nicht gespeichert und nur für diese Sitzung genutzt.")
 
 # --- 3. OBERFLÄCHE ---
-st.title("🥗 Veggie-Genius")
-st.write("Dein Schweizer Assistent für gesunde, vegetarische Wochenplanung.")
-st.divider()
+st.title("🥦 VeggieVibe")
+st.subheader("Dein smarter KI-Wochenplaner")
 
-st.subheader("Deine Vorlieben")
-wünsche = st.text_area("Was möchtest du essen?", 
-                       placeholder="z.B. Pizza, Pasta, Tofu...", height=100)
-
-allergien = st.text_input("Allergien / Unverträglichkeiten", 
-                          placeholder="z.B. keine")
-
+wünsche = st.text_area("Was möchtest du essen?", placeholder="z.B. Pasta, Pizza...")
 col1, col2 = st.columns(2)
 with col1:
-    kcal = st.number_input("Kalorien pro Mahlzeit", min_value=200, value=600, step=50)
+    kalorien = st.number_input("Kalorienziel:", value=2000)
 with col2:
-    budget = st.number_input("Budget (CHF)", min_value=10, value=50, step=5)
+    budget = st.number_input("Budget (CHF):", value=50)
 
-mahlzeiten = st.multiselect("Welche Mahlzeiten?", 
-                            ["Frühstück", "Mittagessen", "Nachtessen"], 
-                            default=["Mittagessen"])
-
-st.divider()
-
-# --- 4. LOGIK (CHATGPT ANFRAGE) ---
-if st.button("Wochenplan erstellen ✨"):
-    if not wünsche:
-        st.warning("Bitte gib kurz deine Vorlieben ein!")
+# --- 4. START ---
+if st.button("🚀 Plan jetzt erstellen"):
+    if not user_api_key:
+        st.error("⚠️ Bitte gib zuerst deinen API-Key in der linken Seitenleiste ein!")
+    elif not wünsche:
+        st.warning("⚠️ Was möchtest du essen?")
     else:
-        with st.spinner('ChatGPT erstellt deinen Plan...'):
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {OPENAI_API_KEY}"
-            }
-            # Wir nutzen GPT-4o-mini: Extrem schnell, günstig und zuverlässig
-            payload = {
-                "model": "gpt-4o-mini",
-                "messages": [
-                    {"role": "system", "content": "Du bist ein hilfreicher Koch-Assistent für Jugendliche in der Schweiz. Erstelle vegetarische Pläne mit Schweizer Zutaten."},
-                    {"role": "user", "content": f"Erstelle einen vegetarischen Wochenplan. Wünsche: {wünsche}. Allergien: {allergien}. Kalorien: {kcal} pro Mahlzeit. Budget: {budget} CHF. Antworte mit: 1. Plan (Tabelle Mo-So), 2. Rezepte (einfach), 3. Einkaufsliste (sortiert)."}
-                ],
-                "temperature": 0.7
-            }
-            
+        with st.spinner('KI kocht gerade...'):
             try:
-                response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=60)
-                result = response.json()
+                # Wir nutzen den Key, den du oben im Feld eingibst
+                client = OpenAI(api_key=user_api_key)
                 
-                if response.status_code == 200:
-                    answer = result['choices'][0]['message']['content']
-                    st.success("Erfolg! Dein Plan ist fertig.")
-                    st.markdown(answer)
-                else:
-                    error_msg = result.get('error', {}).get('message', 'Unbekannter Fehler')
-                    st.error(f"OpenAI Fehler: {error_msg}")
-                    if "insufficient_quota" in error_msg:
-                        st.info("Hinweis: Du musst bei OpenAI ein kleines Guthaben (z.B. 5 CHF) aufladen, um den Key zu nutzen.")
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "Du bist ein Veggie-Koch-Profi für Jugendliche."},
+                        {"role": "user", "content": f"Erstelle Plan für: {wünsche}, Budget: {budget}CHF, Kalorien: {kalorien}."}
+                    ]
+                )
+                st.success("Fertig!")
+                st.write(response.choices[0].message.content)
             except Exception as e:
-                st.error(f"Verbindungsfehler: {e}")
-
+                st.error(f"Fehler: {e}. Prüfe, ob dein Key Guthaben hat!")
