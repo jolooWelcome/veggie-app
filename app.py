@@ -9,6 +9,17 @@ st.markdown("""
     /* Hintergrund */
     .stApp { background-color: #f4f4f4; }
     
+    /* TITEL: DOPPELT SO GROSS, WEINROT, OHNE SYMBOL */
+    .main-title { 
+        font-size: 4.5rem !important; 
+        color: #722F37 !important; 
+        text-align: center !important;
+        margin-bottom: 30px !important;
+        font-weight: 800 !important;
+        line-height: 1.1 !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+
     /* UNIFORME ÜBERSCHRIFTEN (Labels) */
     .stApp label p, .stApp h2, .stApp h3, p { 
         color: #31333F !important; 
@@ -17,18 +28,9 @@ st.markdown("""
         font-weight: 600 !important;
         margin-bottom: 5px !important;
     }
-    
-    /* TITEL: DOPPELT SO GROSS & OHNE SYMBOL */
-    h1 { 
-        font-size: 4.5rem !important; /* Doppelt so groß wie vorher */
-        color: #722F37 !important; 
-        text-align: center !important;
-        margin-bottom: 30px !important;
-        font-weight: 800 !important;
-        line-height: 1.1 !important;
-    }
 
-    /* UNIFORME SCHWARZE FELDER (Inputs) */
+    /* UNIFORME SCHWARZE FELDER (Inputs) mit WEISSER SCHRIFT */
+    /* Zwingt alle Felder auf das Design von 'Kalorienziel' */
     .stTextArea textarea, .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
         background-color: #31333F !important;
         color: white !important;
@@ -39,7 +41,7 @@ st.markdown("""
         padding: 10px !important;
     }
 
-    /* FIX: AUSGEWÄHLTE MAHLZEIT IN WEISS */
+    /* FIX: TEXT IN DER AUSWAHLBOX & DROPDOWN IN WEISS */
     div[data-baseweb="select"] span, 
     div[data-baseweb="select"] div[aria-selected="true"],
     div[data-baseweb="select"] div {
@@ -71,7 +73,7 @@ st.markdown("""
         margin-top: 20px;
     }
     
-    /* Kompakte Karten unten */
+    /* KOMPAKTE LEBENSMITTEL-LISTE UNTEN */
     .small-food-card {
         background: white;
         padding: 5px 10px;
@@ -83,7 +85,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. DEINE ERLAUBTE LISTE ---
+# --- 2. INITIALISIERUNG DER ERLAUBTEN LISTE ---
 if 'allowed_foods' not in st.session_state:
     st.session_state.allowed_foods = [
         "Weissbrot, Toastbrot (Frisch)", "Reis, Mais, Hirse", "Nudeln (ohne Ei)", 
@@ -94,13 +96,60 @@ if 'allowed_foods' not in st.session_state:
         "Erbsen", "Äpfel/ Birnen (geschält)", "Melone, Trauben (weiss)", "Mango/Heidelbeere"
     ]
 
-# --- 3. OBERFLÄCHE ---
-# Titel jetzt ohne Emoji und über CSS vergrößert
-st.markdown("<h1>Sophis Veggie APP</h1>", unsafe_allow_html=True)
+# --- 3. OBERFLÄCHE (UI) ---
+st.markdown('<h1 class="main-title">Sophis Veggie APP</h1>', unsafe_allow_html=True)
 
 with st.container():
     wünsche = st.text_area("Was möchtest du essen?", placeholder="z.B. Nudeln...")
     kuehlschrank = st.text_area("Habe ich noch im Kühlschrank:", placeholder="z.B. Zuccini...")
     
-    col
+    col1, col2 = st.columns(2)
+    with col1:
+        mahlzeit_typ = st.selectbox("Mahlzeiten anpassen:", ["Morgenessen", "Mittagessen", "Nachtessen"])
+        plan_art = st.radio("Plan-Modus:", ["Einmalige Mahlzeit", "Wochenplan (7 Tage)"])
+    
+    with col2:
+        kalorien = st.number_input("Kalorienziel:", value=600)
+        budget = st.number_input("Budget (CHF):", value=20)
 
+# --- 4. KI-LOGIK (DER WITZIGE VEGGIE-GUARD) ---
+if st.button("✨ KI Menü zaubern"):
+    try:
+        client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+        
+        prompt = f"""
+        Du bist Sophis persönlicher KI-Buddy (16 Jahre alt, locker & witzig drauf). 
+        
+        STRENGE REGELN FÜR DICH:
+        1. Verwende für die Rezepte NUR Zutaten aus 'Wünsche' oder 'Kühlschrank'.
+        2. Checke, ob diese Zutaten auf Sophis erlaubter Liste stehen: {', '.join(st.session_state.allowed_foods)}. 
+           Falls nicht, weise Sophia am Anfang witzig darauf hin (z.B. '🚨 Alarm! VIP-Verstoß!').
+        3. Checke streng auf Fleisch/Fisch. Wenn Sophia schummelt, sag ihr locker, dass das hier Veggie-Territorium ist!
+        4. Erstelle MINDESTENS 3 verschiedene Menü-Vorschläge ({plan_art}) für {mahlzeit_typ}.
+        5. Gib für JEDES Menü die Zubereitung und eine Einkaufsliste an.
+        
+        DATEN:
+        Wünsche: {wünsche} | Kühlschrank: {kuehlschrank} | Budget: {budget} CHF | Kalorien: {kalorien}
+        """
+        
+        with st.spinner('🚀 Sophia, die KI poliert die Rezepte...'):
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            st.success("✅ Check erledigt! Hier sind deine Optionen:")
+            st.markdown("---")
+            st.markdown(response.choices[0].message.content)
+    except Exception as e:
+        st.error(f"Oje, Fehler: {e}")
+
+st.markdown("---")
+
+# --- 5. ERLAUBTE LISTE ANZEIGEN (KOMPAKT) ---
+st.markdown("#### 🛒 Meine erlaubten Nahrungsmittel")
+for food in st.session_state.allowed_foods:
+    cols = st.columns([10, 1])
+    cols[0].markdown(f"<div class='small-food-card'>{food}</div>", unsafe_allow_html=True)
+    if cols[1].button("❌", key=food):
+        st.session_state.allowed_foods.remove(food)
+        st.rerun()
