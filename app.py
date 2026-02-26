@@ -9,7 +9,7 @@ st.markdown("""
     /* Hintergrund */
     .stApp { background-color: #f4f4f4; }
     
-    /* TITEL: DOPPELT SO GROSS, WEINROT, OHNE SYMBOL */
+    /* TITEL: RIESIG & WEINROT */
     .main-title { 
         font-size: 4.5rem !important; 
         color: #722F37 !important; 
@@ -20,44 +20,46 @@ st.markdown("""
         font-family: 'Inter', sans-serif !important;
     }
 
-    /* UNIFORME ÜBERSCHRIFTEN (Labels) */
-    .stApp label p, .stApp h2, .stApp h3, p { 
+    /* ÜBERSCHRIFTEN (Labels) */
+    .stApp label p, .stApp h2, .stApp h3 { 
         color: #31333F !important; 
         font-family: 'Inter', sans-serif !important;
         font-size: 1.05rem !important;
         font-weight: 600 !important;
-        margin-bottom: 5px !important;
     }
 
-    /* UNIFORME SCHWARZE FELDER (Inputs) mit WEISSER SCHRIFT */
-    /* Zwingt alle Felder auf das Design von 'Kalorienziel' */
+    /* SPEZIELLE ÜBERSCHRIFT FÜR ERLAUBTE NAHRUNGSMITTEL (SCHWARZ) */
+    .food-header {
+        color: black !important;
+        font-weight: bold !important;
+        font-size: 1.2rem !important;
+        margin-top: 20px;
+    }
+
+    /* SCHWARZE EINGABEFELDER (Inputs) */
     .stTextArea textarea, .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
         background-color: #31333F !important;
         color: white !important;
         border: 2px solid #722F37 !important;
         border-radius: 8px !important;
         font-size: 1rem !important;
-        font-family: 'Inter', sans-serif !important;
-        padding: 10px !important;
     }
 
-    /* FIX: TEXT IN DER AUSWAHLBOX & DROPDOWN IN WEISS */
+    /* FIX: AUSGEWÄHLTE MAHLZEIT IM FELD ZWINGEND WEISS */
     div[data-baseweb="select"] span, 
     div[data-baseweb="select"] div[aria-selected="true"],
     div[data-baseweb="select"] div {
         color: white !important;
-        font-size: 1rem !important;
     }
 
-    /* Radio-Buttons (Plan-Modus) */
+    /* RADIO-BUTTONS */
     div[role="radiogroup"] {
         background-color: #31333F;
         padding: 10px;
         border-radius: 8px;
         border: 2px solid #722F37;
-        color: white !important;
     }
-    div[role="radiogroup"] label p { color: white !important; font-size: 0.95rem !important; }
+    div[role="radiogroup"] label p { color: white !important; }
 
     /* GELBER ZAUBER-BUTTON */
     .stButton>button { 
@@ -70,10 +72,9 @@ st.markdown("""
         font-weight: bold;
         font-size: 1.1rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-top: 20px;
     }
     
-    /* KOMPAKTE LEBENSMITTEL-LISTE UNTEN */
+    /* KOMPAKTE LEBENSMITTEL-LISTE (SCHWARZE SCHRIFT) */
     .small-food-card {
         background: white;
         padding: 5px 10px;
@@ -81,6 +82,15 @@ st.markdown("""
         border-left: 3px solid #722F37;
         margin-bottom: 3px;
         font-size: 0.85rem;
+        color: black !important; /* Zwingend Schwarz für Sophia */
+        font-weight: 500;
+    }
+
+    /* FIX FÜR DAS EINGABEFELD IN DER LISTE (SCHWARZ) */
+    .food-list-input input {
+        color: black !important;
+        background-color: white !important;
+        border: 1px solid #722F37 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -116,37 +126,41 @@ with st.container():
 if st.button("✨ KI Menü zaubern"):
     try:
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-        
         prompt = f"""
-        Du bist Sophis persönlicher KI-Buddy (16 Jahre alt, locker & witzig drauf). 
-        
-        STRENGE REGELN FÜR DICH:
-        1. Verwende für die Rezepte NUR Zutaten aus 'Wünsche' oder 'Kühlschrank'.
-        2. Checke, ob diese Zutaten auf Sophis erlaubter Liste stehen: {', '.join(st.session_state.allowed_foods)}. 
-           Falls nicht, weise Sophia am Anfang witzig darauf hin (z.B. '🚨 Alarm! VIP-Verstoß!').
-        3. Checke streng auf Fleisch/Fisch. Wenn Sophia schummelt, sag ihr locker, dass das hier Veggie-Territorium ist!
-        4. Erstelle MINDESTENS 3 verschiedene Menü-Vorschläge ({plan_art}) für {mahlzeit_typ}.
-        5. Gib für JEDES Menü die Zubereitung und eine Einkaufsliste an.
-        
-        DATEN:
-        Wünsche: {wünsche} | Kühlschrank: {kuehlschrank} | Budget: {budget} CHF | Kalorien: {kalorien}
+        Du bist Sophis persönlicher KI-Buddy (16 Jahre alt, locker & witzig).
+        STRENGE REGELN:
+        1. Rezepte NUR aus 'Wünsche' oder 'Kühlschrank'.
+        2. Check gegen VIP-Liste: {', '.join(st.session_state.allowed_foods)}. 
+           Falls was fehlt -> witzige Warnung!
+        3. Fleisch/Fisch? -> Absolutes Veto im Teenie-Slang!
+        4. Erstelle 3 Menü-Optionen ({plan_art}) für {mahlzeit_typ} inkl. Zubereitung & Einkaufsliste.
         """
-        
         with st.spinner('🚀 Sophia, die KI poliert die Rezepte...'):
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}]
             )
             st.success("✅ Check erledigt! Hier sind deine Optionen:")
-            st.markdown("---")
             st.markdown(response.choices[0].message.content)
     except Exception as e:
         st.error(f"Oje, Fehler: {e}")
 
 st.markdown("---")
 
-# --- 5. ERLAUBTE LISTE ANZEIGEN (KOMPAKT) ---
-st.markdown("#### 🛒 Meine erlaubten Nahrungsmittel")
+# --- 5. ERLAUBTE LISTE ANZEIGEN (SCHWARZE SCHRIFT) ---
+st.markdown('<p class="food-header">🛒 Meine erlaubten Nahrungsmittel</p>', unsafe_allow_html=True)
+
+# Das Eingabefeld für neue Nahrungsmittel in Weiß/Schwarz
+st.markdown('<div class="food-list-input">', unsafe_allow_html=True)
+new_food = st.text_input("Nahrungsmittel ergänzen:", placeholder="Zutat tippen...", label_visibility="collapsed")
+st.markdown('</div>', unsafe_allow_html=True)
+
+if st.button("➕ Hinzufügen"):
+    if new_food and new_food not in st.session_state.allowed_foods:
+        st.session_state.allowed_foods.append(new_food)
+        st.rerun()
+
+# Kompakte Anzeige der Liste in SCHWARZ
 for food in st.session_state.allowed_foods:
     cols = st.columns([10, 1])
     cols[0].markdown(f"<div class='small-food-card'>{food}</div>", unsafe_allow_html=True)
