@@ -36,9 +36,17 @@ st.markdown("""
         border-radius: 8px !important;
     }
 
-    /* ZWECKGEBUNDENE SCHRIFTFARBE DER KI-ANTWORT: IMMER SCHWARZ */
-    .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+    /* ZWECKGEBUNDENE SCHRIFTFARBE: SCHWARZ */
+    /* Dies gilt für KI-Antworten und spezifische Sektionen */
+    .black-text {
         color: black !important;
+        font-weight: bold !important;
+    }
+
+    /* FIX: LADETEXT (SPINNER) IN SCHWARZ */
+    div[data-testid="stStatusWidget"] p {
+        color: black !important;
+        font-weight: bold !important;
     }
 
     /* GELBER ZAUBER-BUTTON */
@@ -67,7 +75,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. INITIALISIERUNG SESSION STATE (Speicher für Interaktion) ---
+# --- 2. INITIALISIERUNG SESSION STATE ---
 if 'last_response' not in st.session_state:
     st.session_state.last_response = None
 if 'allowed_foods' not in st.session_state:
@@ -96,7 +104,7 @@ with st.container():
         kalorien = st.number_input("Kalorienziel pro Mahlzeit:", value=600)
         budget = st.number_input("Budget (CHF):", value=20)
 
-# --- 4. KI-LOGIK MIT INTERAKTIONS-FLOW ---
+# --- 4. KI-LOGIK ---
 if st.button("✨ KI Menü zaubern"):
     try:
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -104,7 +112,6 @@ if st.button("✨ KI Menü zaubern"):
         Du bist Sophis persönlicher KI-Buddy (16, locker & witzig). 
         STRENGE REGEL: Verwende AUSSCHLIESSLICH Zutaten aus 'Wünsche' oder 'Kühlschrank'.
         Checke gegen VIP-Liste: {', '.join(st.session_state.allowed_foods)}. 
-        Wording: Locker, witzig, Emojis.
         
         AUFTRAG:
         Generiere 3 Menü-Vorschläge. 
@@ -112,44 +119,32 @@ if st.button("✨ KI Menü zaubern"):
         1. Name des Gerichts
         2. Das detaillierte Rezept & Zubereitung
         3. Die Einkaufsliste mit Preisen in CHF.
-        
-        Daten: Wünsche: {wünsche}, Kühlschrank: {kuehlschrank}, Budget: {budget} CHF, Kcal: {kalorien}.
         """
-        with st.spinner('🚀 Sophia, die KI stellt die Optionen zusammen...'):
+        # Hier ist der schwarze Ladetext
+        with st.spinner('Sophia, die KI stellt die Optionen zusammen...'):
             response = client.chat.completions.create(
-                model="gpt-4o", # Wir nutzen das stärkere Modell für bessere Struktur
+                model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}]
             )
             st.session_state.last_response = response.choices[0].message.content
-            st.rerun() # Seite neu laden, um Buttons anzuzeigen
+            st.rerun()
     except Exception as e:
-        st.error(f"Oje, Fehler: {e}")
+        st.error(f"Fehler: {e}")
 
-# Wenn ein Resultat da ist, zeigen wir es an
+# Resultate anzeigen
 if st.session_state.last_response:
     st.markdown("---")
-    st.success("✅ Deine Optionen sind bereit!")
+    # Ergebnis-Schrift in Schwarz über CSS-Klasse
+    st.markdown(f'<div style="color: black;">{st.session_state.last_response}</div>', unsafe_allow_html=True)
     
-    # Wir zeigen erst mal nur die Übersicht an (vereinfacht für die Demo)
-    # Profi-Tipp: Hier könnte man den Text splitten. Für den User zeigen wir jetzt alles an, 
-    # fügen aber die interaktive Bestätigung ein.
-    
-    st.markdown("### Hier sind deine Gourmet-Ideen:")
-    st.write(st.session_state.last_response)
-    
-    st.markdown("---")
-    st.markdown("### 🛠️ Was soll ich als Nächstes tun?")
-    col_btn1, col_btn2 = st.columns(2)
-    
-    if col_btn1.button("📑 Einkaufsliste als Text zeigen"):
-        st.info("Kopiere die Liste oben einfach in deine Notizen-App!")
-        
-    if col_btn2.button("👨‍🍳 Neues Menü würfeln"):
+    if st.button("👨‍🍳 Neues Menü würfeln"):
         st.session_state.last_response = None
         st.rerun()
 
 st.markdown("---")
-st.markdown("#### 🛒 Meine erlaubten Nahrungsmittel")
+# Überschrift in Schwarz
+st.markdown('<p class="black-text">🛒 Meine erlaubten Nahrungsmittel</p>', unsafe_allow_html=True)
+
 for food in st.session_state.allowed_foods:
     cols = st.columns([10, 1])
     cols[0].markdown(f"<div class='small-food-card'>{food}</div>", unsafe_allow_html=True)
