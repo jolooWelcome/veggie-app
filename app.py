@@ -41,7 +41,7 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* GELBER ZAUBER-BUTTON */
+    /* GELBER HAUPT-BUTTON */
     .stButton>button { 
         background-color: #FFD700 !important; 
         color: #31333F !important; 
@@ -51,7 +51,6 @@ st.markdown("""
         width: 100%; 
         font-weight: bold;
         font-size: 1.1rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     /* VIP-Karten Design */
@@ -63,20 +62,21 @@ st.markdown("""
         margin-bottom: 3px;
         font-size: 0.85rem;
         color: black !important;
-        height: 38px; /* Höhe für Angleichung an Button */
+        height: 35px;
         display: flex;
         align-items: center;
     }
 
-    /* GRAUER LÖSCH-BUTTON (Anpassung laut Auftrag) */
+    /* ANPASSUNG LÖSCH-BUTTON (Kleiner, Dunkel, Weißes X) */
     .stButton>button[key^="del_"] {
-        background-color: #cccccc !important;
-        color: black !important;
-        border: 1px solid #999999 !important;
+        background-color: #31333F !important;
+        color: white !important;
+        border: 1px solid #722F37 !important;
         border-radius: 6px !important;
-        height: 38px !important; /* Gleiche Höhe wie das Feld */
-        width: 100% !important;
+        height: 35px !important;
+        width: 40px !important; /* Kleiner als die Hauptfelder */
         padding: 0px !important;
+        font-size: 0.9rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -119,13 +119,17 @@ if st.button("✨ Menü zaubern"):
         Aufgabe: 3 Menüs aus dieser Liste erstellen: {', '.join(st.session_state.allowed_foods)}.
         Sollte der User Wünsche ({wünsche}) oder Kühlschrank ({kuehlschrank}) haben, die nicht auf der Liste sind, weise höflich darauf hin.
         """
-        with st.spinner('Sophia, die KI stellt die Optionen zusammen...'):
+        
+        # Arbeits-Anzeige während der Generierung
+        with st.status("Das Menü wird erstellt...", expanded=True) as status:
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}]
             )
             st.session_state.last_response = response.choices[0].message.content
+            status.update(label="Menü fertig gezaubert!", state="complete", expanded=False)
             st.rerun()
+            
     except Exception as e:
         st.error(f"Fehler: {e}")
 
@@ -136,11 +140,10 @@ if st.session_state.last_response:
         st.session_state.last_response = None
         st.rerun()
 
-# --- 5. VIP LISTE VERWALTUNG (Deine Anpassungen) ---
+# --- 5. VIP LISTE VERWALTUNG ---
 st.markdown("---")
 st.markdown('<p class="black-text">🛒 Diese Zutaten darf ich verwenden</p>', unsafe_allow_html=True)
 
-# Feld zum Ergänzen neuer Zutaten
 neue_zutat = st.text_input("Zutat zur VIP-Liste hinzufügen:")
 if st.button("Hinzufügen"):
     if neue_zutat and neue_zutat not in st.session_state.allowed_foods:
@@ -150,9 +153,10 @@ if st.button("Hinzufügen"):
 st.markdown("<br>", unsafe_allow_html=True)
 
 for food in st.session_state.allowed_foods:
-    cols = st.columns([10, 2])
+    # Aufteilung 10 zu 1, damit der Lösch-Button schmal bleibt
+    cols = st.columns([10, 1])
     cols[0].markdown(f"<div class='small-food-card'>{food}</div>", unsafe_allow_html=True)
-    if cols[1].button("X", key=f"del_{food}"):
-        st.session_state.allowed_foods.remove(food)
-        st.rerun()
-
+    with cols[1]:
+        if st.button("X", key=f"del_{food}"):
+            st.session_state.allowed_foods.remove(food)
+            st.rerun()
