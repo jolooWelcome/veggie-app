@@ -8,7 +8,7 @@ st.markdown("""
     <style>
     /* Hintergrund */
     .stApp { background-color: #f4f4f4; }
-    
+
     /* TITEL */
     .main-title { 
         font-size: 4.5rem !important; 
@@ -42,7 +42,7 @@ st.markdown("""
     }
 
     /* GELBER HAUPT-BUTTON */
-    .stButton>button { 
+    button[kind="primary"] {  /* NEU: nur Primary Buttons gelb */
         background-color: #FFD700 !important; 
         color: #31333F !important; 
         border-radius: 12px; 
@@ -67,27 +67,46 @@ st.markdown("""
         align-items: center;
     }
 
-/* SPEZIAL-STYLING FÜR DIE LÖSCH-BUTTONS */
-    /* Wir suchen alle Buttons, deren interner Name mit 'del_' beginnt */
-    div.stButton > button[key^="del_"] {
-        background-color: #31333F !important; /* Dunkel wie deine Budget-Felder */
-        color: white !important;              /* Das Kreuz wird weiß */
-        border: 1px solid #722F37 !important; /* Ein dezenter Rand in deiner App-Farbe */
-        border-radius: 6px !important;
-        height: 35px !important;              /* Schön kompakt */
-        width: 45px !important;               /* Nicht zu breit */
-        padding: 0px !important;
-        line-height: 1 !important;
-        font-weight: bold !important;
+    /* NEU: VIP-Chips (Option B) */
+    .vip-chip-left {
+        background: white;
+        border: 1px solid rgba(114, 47, 55, 0.35);
+        border-right: none;
+        border-radius: 999px 0 0 999px;
+        padding: 6px 12px;
+        min-height: 35px;
+        display: flex;
+        align-items: center;
+        color: #31333F !important;
+        font-size: 0.9rem;
+        overflow-wrap: anywhere;
     }
 
-    /* Damit der Button beim Drücken nicht wieder gelb wird */
-    div.stButton > button[key^="del_"]:active, 
-    div.stButton > button[key^="del_"]:focus,
-    div.stButton > button[key^="del_"]:hover {
-        background-color: #454754 !important; /* Etwas heller beim Drüberfahren */
-        color: white !important;
-        border-color: #722F37 !important;
+    /* NEU: "X" als Chip-Kappe rechts (passt optisch an die Pill an) */
+    button[kind="tertiary"] {
+        background: white !important;
+        color: #6b7280 !important; /* neutral grau */
+        border: 1px solid rgba(114, 47, 55, 0.35) !important;
+        border-left: none !important;
+        border-radius: 0 999px 999px 0 !important;
+        height: 35px !important;
+        width: 42px !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+        font-weight: 800 !important;
+    }
+
+    button[kind="tertiary"]:hover {
+        background: rgba(220, 38, 38, 0.10) !important; /* leicht rot */
+        color: #dc2626 !important;
+        border-color: rgba(220, 38, 38, 0.35) !important;
+    }
+
+    button[kind="tertiary"]:focus,
+    button[kind="tertiary"]:active {
+        background: rgba(114, 47, 55, 0.08) !important;
+        color: #722F37 !important;
+        border-color: rgba(114, 47, 55, 0.45) !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -122,7 +141,7 @@ with st.container():
         budget = st.number_input("Budget (CHF):", value=20)
 
 # --- 4. KI-LOGIK ---
-if st.button("✨ Menü zaubern"):
+if st.button("✨ Menü zaubern", type="primary"):  # NEU
     try:
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
         
@@ -175,7 +194,7 @@ if st.button("✨ Menü zaubern"):
 if st.session_state.last_response:
     st.markdown("---")
     st.markdown(f'<div style="color: black;">{st.session_state.last_response}</div>', unsafe_allow_html=True)
-    if st.button("👨‍🍳 Neues Menü würfeln"):
+    if st.button("👨‍🍳 Neues Menü würfeln", type="primary"):  # NEU
         st.session_state.last_response = None
         st.rerun()
 
@@ -184,7 +203,7 @@ st.markdown("---")
 st.markdown('<p class="black-text">🛒 Diese Zutaten darf ich verwenden</p>', unsafe_allow_html=True)
 
 neue_zutat = st.text_input("Zutat zur VIP-Liste hinzufügen:")
-if st.button("Hinzufügen"):
+if st.button("Hinzufügen", type="primary"):  # NEU
     if neue_zutat and neue_zutat not in st.session_state.allowed_foods:
         st.session_state.allowed_foods.append(neue_zutat)
         st.rerun()
@@ -192,15 +211,13 @@ if st.button("Hinzufügen"):
 st.markdown("<br>", unsafe_allow_html=True)
 
 for food in st.session_state.allowed_foods:
-    # Aufteilung 10 zu 1, damit der Lösch-Button schmal bleibt
-    cols = st.columns([10, 1])
-    cols[0].markdown(f"<div class='small-food-card'>{food}</div>", unsafe_allow_html=True)
+    # NEU: Chip-Optik (linke Pill) + X als rechte Pill-Kappe
+    cols = st.columns([10, 1], gap="small")  # NEU
+    cols[0].markdown(f"<div class='vip-chip-left'>{food}</div>", unsafe_allow_html=True)  # NEU
     with cols[1]:
-        if st.button("X", key=f"del_{food}"):
+        if st.button("✕", key=f"del_{food}", type="tertiary"):  # NEU
             st.session_state.allowed_foods.remove(food)
             st.rerun()
-
-
 
 
 
