@@ -135,6 +135,7 @@ if st.button("✨ Menü zaubern"):
         Strenge Verbote: 
         - Benutze NIEMALS Zutaten, die nicht in der VIP-Liste stehen oder die nicht vegetarisch sind. Weise in diesem Fall Sophia darauf hin
         - Schlage keine Gerichte vor, die länger als 30 Minuten dauern.
+        - Mach einen Hinweis bei Zutaten die nicht auf der VIP-Liste sind oder die nicht vegetarisch sind
         
         Pflicht-Elemente pro Gericht:
         1. Ein kreativer Name.
@@ -196,6 +197,7 @@ for food in st.session_state.allowed_foods:
         if st.button("X", key=f"del_{food}"):
             st.session_state.allowed_foods.remove(food)
             st.rerun()
+
 
 
 
