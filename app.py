@@ -71,7 +71,7 @@ st.markdown("""
     .stButton>button[key^="del_"] {
         background-color: #31333F !important;
         color: white !important;
-        border: 1px solid #722F37 !important;
+        border: no boarder !important;
         border-radius: 6px !important;
         height: 35px !important;
         width: 40px !important; /* Kleiner als die Hauptfelder */
@@ -160,3 +160,4 @@ for food in st.session_state.allowed_foods:
         if st.button("X", key=f"del_{food}"):
             st.session_state.allowed_foods.remove(food)
             st.rerun()
+
