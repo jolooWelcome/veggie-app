@@ -123,7 +123,7 @@ Pflicht-Elemente pro Gericht:
 6.	Gesamtkalorien pro Menü
 
 Du darfst Zutaten ergänzen es müssen aber zwingend die Zutaten auf der Liste
-Was möchtest du essen?: {was möchtest du essen?} und 
+Was möchtest du essen?:{was möchtest du essen?} und 
 habe ich noch im Kühlschrank: {habe ich noch im Kühlschrank} 
 Ergänzende Zutaten müssen zwingend aus der Liste: VIP-Liste kommen                               
 VIP-Liste: {', '.join(st.session_state.allowed_foods)}
@@ -160,5 +160,6 @@ for food in st.session_state.allowed_foods:
     if cols[1].button("❌", key=f"del_{food}"):
         st.session_state.allowed_foods.remove(food)
         st.rerun()
+
 
 
