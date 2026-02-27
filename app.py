@@ -6,76 +6,109 @@ st.set_page_config(page_title="Sophis Veggie APP", page_icon="🥦", layout="cen
 
 st.markdown("""
     <style>
-    /* Hintergrund */
-    .stApp { background-color: #f4f4f4; }
+    /* Hintergrund & Schriftart */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
     
-    /* TITEL */
+    .stApp { 
+        background-color: #F8F9FA; 
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* TITEL DESIGN */
     .main-title { 
-        font-size: 4.5rem !important; 
+        font-size: 3.5rem !important; 
         color: #722F37 !important; 
         text-align: center !important;
-        margin-bottom: 30px !important;
+        margin-bottom: 10px !important;
         font-weight: 800 !important;
-        line-height: 1.1 !important;
-        font-family: 'Inter', sans-serif !important;
-    }
-
-    /* ÜBERSCHRIFTEN (Labels) */
-    .stApp label p, .stApp h2, .stApp h3 { 
-        color: #31333F !important; 
-        font-family: 'Inter', sans-serif !important;
-        font-size: 1.05rem !important;
-        font-weight: 600 !important;
-    }
-
-    /* SCHWARZE EINGABEFELDER mit WEISSER SCHRIFT */
-    .stTextArea textarea, .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
-        background-color: #31333F !important;
-        color: white !important;
-        border: 2px solid #722F37 !important;
-        border-radius: 8px !important;
-    }
-
-    /* ZWECKGEBUNDENE SCHRIFTFARBE: SCHWARZ */
-    /* Dies gilt für KI-Antworten und spezifische Sektionen */
-    .black-text {
-        color: black !important;
-        font-weight: bold !important;
-    }
-
-    /* FIX: LADETEXT (SPINNER) IN SCHWARZ */
-    div[data-testid="stStatusWidget"] p {
-        color: black !important;
-        font-weight: bold !important;
-    }
-
-    /* GELBER ZAUBER-BUTTON */
-    .stButton>button { 
-        background-color: #FFD700 !important; 
-        color: #31333F !important; 
-        border-radius: 12px; 
-        border: 2px solid #722F37; 
-        height: 3.5em; 
-        width: 100%; 
-        font-weight: bold;
-        font-size: 1.1rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
     
-    /* Kompakte Karten */
-    .small-food-card {
+    .sub-title {
+        text-align: center;
+        color: #555;
+        margin-bottom: 40px;
+        font-size: 1.1rem;
+    }
+
+    /* EINGABE-CONTAINER (Cards) */
+    div[data-testid="stVerticalBlock"] > div:has(div.stTextArea) {
         background: white;
-        padding: 5px 10px;
-        border-radius: 6px;
-        border-left: 3px solid #722F37;
-        margin-bottom: 3px;
-        font-size: 0.85rem;
-        color: black !important;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+
+    /* LABELS & ÜBERSCHRIFTEN */
+    .stApp label p { 
+        color: #722F37 !important; 
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+    }
+
+    /* STYLING DER INPUT-FELDER */
+    .stTextArea textarea, .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        color: #31333F !important;
+        border: 1px solid #ddd !important;
+        border-radius: 10px !important;
+        transition: all 0.3s ease;
+    }
+    
+    .stTextArea textarea:focus {
+        border-color: #722F37 !important;
+        box-shadow: 0 0 0 2px rgba(114, 47, 55, 0.2) !important;
+    }
+
+    /* DER ZAUBER-BUTTON */
+    .stButton>button { 
+        background: linear-gradient(135deg, #FFD700 0%, #FFB800 100%) !important; 
+        color: #31333F !important; 
+        border-radius: 50px !important; 
+        border: none !important;
+        height: 4em !important; 
+        width: 100% !important; 
+        font-weight: 800 !important;
+        font-size: 1.2rem !important;
+        letter-spacing: 1px;
+        box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3) !important;
+        transition: transform 0.2s ease !important;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+    }
+
+    /* KI-ANTWORT BOX */
+    .ai-response-box {
+        background-color: white;
+        color: #31333F;
+        padding: 30px;
+        border-radius: 20px;
+        border-left: 8px solid #FFD700;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        line-height: 1.6;
+        margin-top: 20px;
+    }
+
+    /* VIP-LISTEN KARTEN */
+    .small-food-card {
+        background: #fff;
+        padding: 8px 15px;
+        border-radius: 50px;
+        border: 1px solid #eee;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+        color: #333 !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. INITIALISIERUNG SESSION STATE ---
+# --- 2. INITIALISIERUNG ---
 if 'last_response' not in st.session_state:
     st.session_state.last_response = None
 if 'allowed_foods' not in st.session_state:
@@ -90,55 +123,46 @@ if 'allowed_foods' not in st.session_state:
 
 # --- 3. OBERFLÄCHE ---
 st.markdown('<h1 class="main-title">Sophis Veggie APP</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Gesunde Rezepte basierend auf deinen Vorräten ✨</p>', unsafe_allow_html=True)
 
+# Eingabe-Bereich in einer Box
 with st.container():
-    wünsche = st.text_area("Was möchtest du essen?", placeholder="z.B. Nudeln...")
-    kuehlschrank = st.text_area("Habe ich noch im Kühlschrank:", placeholder="z.B. Zuccini...")
+    wünsche = st.text_area("✨ Was möchtest du heute essen?", placeholder="z.B. Etwas Leichtes mit Nudeln...")
+    kuehlschrank = st.text_area("🧊 Das habe ich noch im Kühlschrank:", placeholder="z.B. 2 Karotten, Frischkäse...")
     
     col1, col2 = st.columns(2)
     with col1:
-        mahlzeit_typ = st.selectbox("Mahlzeiten anpassen:", ["Morgenessen", "Mittagessen", "Nachtessen"])
-        plan_art = st.radio("Plan-Modus:", ["Einmalige Mahlzeit", "Wochenplan (7 Tage)"])
+        mahlzeit_typ = st.selectbox("🍽️ Mahlzeit:", ["Morgenessen", "Mittagessen", "Nachtessen"])
+        plan_art = st.radio("📅 Modus:", ["Einmalige Mahlzeit", "Wochenplan (7 Tage)"])
     
     with col2:
-        kalorien = st.number_input("Kalorienziel pro Mahlzeit:", value=600)
-        budget = st.number_input("Budget (CHF):", value=20)
+        kalorien = st.number_input("🔥 Kalorien-Limit:", value=600, step=50)
+        budget = st.number_input("💰 Budget (CHF):", value=20, step=5)
+
+st.markdown("<br>", unsafe_allow_html=True) # Abstandhalter
 
 # --- 4. KI-LOGIK ---
-if st.button("✨ Menü zaubern"):
+if st.button("✨ MENÜ ZAUBERN"):
     try:
-        # 1. Verbindung zu OpenAI herstellen
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
         
-        # 2. Dein individuell gestalteter Prompt (deine Anweisungen)
         prompt = f"""
         Identität: Du bist ein strenger, aber lockerer Ernährungsberater. Dein Tonfall ist motivierend.
+        Hauptaufgabe: Erstelle für Sophia genau 3 Menüvorschläge inklusive Einkaufsliste, Kostenangaben und Kalorienangaben.
         
-        Hauptaufgabe: Erstelle für Sophia genau 3 Menüvorschläge basierend auf ihren Eingaben auf der APP inklusive Einkaufsliste, Kostenangaben und Kalorienangaben pro Menü.
+        STRENGE REGELN: 
+        - NUR Zutaten aus der VIP-Liste oder den Usereingaben verwenden.
+        - Alles muss vegetarisch sein.
+        - Zubereitung unter 30 Minuten.
         
-        Strenge Verbote: 
-        - Benutze NIEMALS Zutaten, die nicht in der VIP-Liste stehen oder die nicht vegetarisch sind. Weise in diesem Fall Sophia darauf hin.
-        - Schlage keine Gerichte vor, die länger als 30 Minuten dauern.
-        
-        Pflicht-Elemente pro Gericht:
-        1. Ein kreativer Name.
-        2. Eine Liste der Vitamine, die darin enthalten sind.
-        3. Eine kurze Schätzung, wie viel "Dreckiges Geschirr" (Skala 1-5) anfällt.
-        4. Das Rezept ausführlich beschreiben.
-        5. Einkaufsliste mit Einzel- und Totalpreisen (CHF).
-        6. Gesamtkalorien pro Menü.
-
-        DATEN AUS DER APP:
-        - Sophias Wunsch: {wünsche}
-        - Noch im Kühlschrank: {kuehlschrank}
+        DATEN:
+        - Wunsch: {wünsche}
+        - Kühlschrank: {kuehlschrank}
         - VIP-Liste: {', '.join(st.session_state.allowed_foods)}
-        - Mahlzeit-Typ: {mahlzeit_typ}
-        - Plan-Modus: {plan_art}
-        
-        WICHTIG: Ergänzende Zutaten müssen zwingend aus der VIP-Liste kommen!
+        - Mahlzeit: {mahlzeit_typ}
         """
-        # Hier ist der schwarze Ladetext
-        with st.spinner('Sophia, die KI stellt die Optionen zusammen...'):
+
+        with st.spinner('🧙‍♀️ Sophia schwingt den Kochlöffel...'):
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}]
@@ -150,17 +174,17 @@ if st.button("✨ Menü zaubern"):
 
 # Resultate anzeigen
 if st.session_state.last_response:
-    st.markdown("---")
-    # Ergebnis-Schrift in Schwarz über CSS-Klasse
-    st.markdown(f'<div style="color: black;">{st.session_state.last_response}</div>', unsafe_allow_html=True)
+    st.markdown("### 🍲 Deine Menü-Vorschläge")
+    st.markdown(f'<div class="ai-response-box">{st.session_state.last_response}</div>', unsafe_allow_html=True)
     
-    if st.button("👨‍🍳 Neues Menü würfeln"):
+    if st.button("👨‍🍳 Neue Ideen würfeln"):
         st.session_state.last_response = None
         st.rerun()
 
-st.markdown("---")
-# Überschrift in Schwarz
-st.markdown('<p class="black-text">🛒 Meine erlaubten Nahrungsmittel</p>', unsafe_allow_html=True)
+# VIP Liste Bereich
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown('### 🛒 Meine VIP-Zutaten')
+st.info("Diese Zutaten darf die KI immer verwenden.")
 
 for food in st.session_state.allowed_foods:
     cols = st.columns([10, 1])
