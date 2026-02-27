@@ -110,22 +110,22 @@ if st.button("✨ KI Menü zaubern"):
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
         prompt = f"""
         Identität: Du bist ein strenger, aber lockerer Ernährungsberater. Dein Tonfall ist motivierend.
-Hauptaufgabe: Erstelle für Sophia genau 3 Menüvorschläge basierend auf ihren Eingaben auf der APP inklusive Einkaufsliste, Kosten Kalorien
+Hauptaufgabe: Erstelle für Sophia genau 3 Menüvorschläge basierend auf ihren Eingaben auf der APP inklusive Einkaufsliste, Kostenangaben und Kalorienangaben pro Menü
 Strenge Verbote: > - Benutze NIEMALS Zutaten, die nicht in der VIP-Liste stehen oder die nicht vegetarisch sind. Weise in diesem Fall Sophia darauf hin
-•	Schlage keine Gerichte vor, die länger als 20 Minuten dauern.
-•	[Hier ein weiteres Verbot einfügen, z.B. "Kein Alkohol"].
+•	Schlage keine Gerichte vor, die länger als 30 Minuten dauern.
+•	
 Pflicht-Elemente pro Gericht:
 1.	Ein kreativer Name.
 2.	Eine Liste der Vitamine, die darin enthalten sind.
 3.	Eine kurze Schätzung, wie viel "Dreckiges Geschirr" (Skala 1-5) anfällt.
-4.	Das Rezept in maximal 5 Schritten. Ein kreativer Name.
-5.	Einkaufsliste
+4.	Das Rezept ausführlich beschreiben. Ein kreativer Name.
+5.	Einkaufsliste mit Einzel- und Totalpreisen
 6.	Gesamtkalorien pro Menü
 
-        
-NUTZE DIESE DATEN:
-Wünsche: {wünsche}
-Kühlschrank: {kuehlschrank}
+Du darfst Zutaten ergänzen es müssen aber zwingend die Zutaten auf der Liste
+Was möchtest du essen?: {was möchtest du essen?} und 
+habe ich noch im Kühlschrank: {habe ich noch im Kühlschrank} 
+Ergänzende Zutaten müssen zwingend aus der Liste: VIP-Liste kommen                               
 VIP-Liste: {', '.join(st.session_state.allowed_foods)}
 Mahlzeit: {mahlzeit_typ}
         """
@@ -160,4 +160,5 @@ for food in st.session_state.allowed_foods:
     if cols[1].button("❌", key=f"del_{food}"):
         st.session_state.allowed_foods.remove(food)
         st.rerun()
+
 
