@@ -125,56 +125,35 @@ with st.container():
 if st.button("✨ Menü zaubern"):
     try:
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
- prompt = f"""
-
+        
+        # ACHTUNG: Diese Zeile muss genau 8 Leerzeichen (oder 2 Tabs) vom Rand eingerückt sein
+        prompt = f"""
         Identität: Du bist ein strenger, aber lockerer Ernährungsberater. Dein Tonfall ist motivierend.
-
         
-
-        Hauptaufgabe: Erstelle für Sophia genau 3 Menüvorschläge basierend auf ihren Eingaben auf der APP inklusive Einkaufsliste, Kostenangaben und Kalorienangaben pro Menü.
-
+        Hauptaufgabe: Erstelle für Sophia genau 3 Menüvorschläge basierend auf ihren Eingaben auf der APP inklusive Einkaufsliste, Kostenangaben und Kalorienangaben pro Menü
         
-
         Strenge Verbote: 
-
-        - Benutze NIEMALS Zutaten, die nicht in der VIP-Liste stehen oder die nicht vegetarisch sind. Weise in diesem Fall Sophia darauf hin.
-
+        - Benutze NIEMALS Zutaten, die nicht in der VIP-Liste stehen oder die nicht vegetarisch sind. Weise in diesem Fall Sophia darauf hin
         - Schlage keine Gerichte vor, die länger als 30 Minuten dauern.
-
         
-
         Pflicht-Elemente pro Gericht:
-
         1. Ein kreativer Name.
-
         2. Eine Liste der Vitamine, die darin enthalten sind.
-
         3. Eine kurze Schätzung, wie viel "Dreckiges Geschirr" (Skala 1-5) anfällt.
-
         4. Das Rezept ausführlich beschreiben.
+        5. Einkaufsliste mit Einzel- und Totalpreisen
+        6. Gesamtkalorien pro Menü
 
-        5. Einkaufsliste mit Einzel- und Totalpreisen (CHF).
-
-        6. Gesamtkalorien pro Menü.
-
-
-
-        DATEN AUS DER APP:
-
-        - Sophias Wunsch: {wünsche}
-
-        - Noch im Kühlschrank: {kuehlschrank}
-
-        - VIP-Liste: {', '.join(st.session_state.allowed_foods)}
-
-        - Mahlzeit-Typ: {mahlzeit_typ}
-
-        - Plan-Modus: {plan_art}
-
+        Du darfst Zutaten ergänzen es müssen aber zwingend die Zutaten auf der Liste sein.
         
-
-        WICHTIG: Ergänzende Zutaten müssen zwingend aus der VIP-Liste kommen!
-
+        DATEN AUS DER APP:
+        Was möchtest du essen?: {wünsche}
+        Habe ich noch im Kühlschrank: {kuehlschrank}
+        Ergänzende Zutaten müssen zwingend aus der VIP-Liste kommen: {', '.join(st.session_state.allowed_foods)}
+        Mahlzeit: {mahlzeit_typ}
+        Plan-Modus: {plan_art}
+        Budget-Ziel: {budget} CHF
+        Kalorien-Ziel: {kalorien}
         """
         
         # Arbeits-Anzeige während der Generierung
@@ -217,6 +196,7 @@ for food in st.session_state.allowed_foods:
         if st.button("X", key=f"del_{food}"):
             st.session_state.allowed_foods.remove(food)
             st.rerun()
+
 
 
 
