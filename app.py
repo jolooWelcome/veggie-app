@@ -128,7 +128,7 @@ if st.button("✨ Menü zaubern"):
         
         # ACHTUNG: Diese Zeile muss genau 8 Leerzeichen (oder 2 Tabs) vom Rand eingerückt sein
         prompt = f"""
-        Identität: Du bist ein strenger, aber lockerer Ernährungsberater. Dein Tonfall ist motivierend.
+        Identität: Du bist ein strenger, aber lockerer Ernährungsberater. Dein Tonfall ist motivierend. Nutze ss anstelle ß
         
         Hauptaufgabe: Erstelle für Sophia genau 3 Menüvorschläge basierend auf ihren Eingaben auf der APP inklusive Einkaufsliste, Kostenangaben und Kalorienangaben pro Menü
         
@@ -146,6 +146,8 @@ if st.button("✨ Menü zaubern"):
         6. Gesamtkalorien pro Menü
 
         Du darfst Zutaten ergänzen es müssen aber zwingend die Zutaten auf der Liste sein.
+
+        Wichtig: Mach einen witzigen Hinweis bei Zutaten die nicht auf der VIP-Liste sind oder die nicht vegetarisch sind
         
         DATEN AUS DER APP:
         Was möchtest du essen?: {wünsche}
@@ -197,6 +199,7 @@ for food in st.session_state.allowed_foods:
         if st.button("X", key=f"del_{food}"):
             st.session_state.allowed_foods.remove(food)
             st.rerun()
+
 
 
 
