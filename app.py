@@ -107,8 +107,11 @@ with st.container():
 # --- 4. KI-LOGIK ---
 if st.button("✨ KI Menü zaubern"):
     try:
+        # 1. Verbindung zu OpenAI herstellen
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-prompt = f"""
+        
+        # 2. Dein individuell gestalteter Prompt (deine Anweisungen)
+        prompt = f"""
         Identität: Du bist ein strenger, aber lockerer Ernährungsberater. Dein Tonfall ist motivierend.
         
         Hauptaufgabe: Erstelle für Sophia genau 3 Menüvorschläge basierend auf ihren Eingaben auf der APP inklusive Einkaufsliste, Kostenangaben und Kalorienangaben pro Menü.
@@ -165,6 +168,7 @@ for food in st.session_state.allowed_foods:
     if cols[1].button("❌", key=f"del_{food}"):
         st.session_state.allowed_foods.remove(food)
         st.rerun()
+
 
 
 
