@@ -105,7 +105,7 @@ with st.container():
         budget = st.number_input("Budget (CHF):", value=20)
 
 # --- 4. KI-LOGIK ---
-if st.button("✨ KI Menü zaubern"):
+if st.button("✨ Menü zaubern"):
     try:
         # 1. Verbindung zu OpenAI herstellen
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -129,10 +129,10 @@ if st.button("✨ KI Menü zaubern"):
         6. Gesamtkalorien pro Menü.
 
         DATEN AUS DER APP:
-        - Sophias Wunsch: {wünsche}
-        - Noch im Kühlschrank: {kuehlschrank}
+        - Sophias Wunsch: {was möchtest du essen?}
+        - Noch im Kühlschrank: {Habe ich noch im Kühlschrank}
         - VIP-Liste (NUR diese Zutaten erlaubt!): {', '.join(st.session_state.allowed_foods)}
-        - Mahlzeit-Typ: {mahlzeit_typ}
+        - Mahlzeit-Typ: {Mahlzeiten anpassen}
         - Plan-Modus: {plan_art}
         
         WICHTIG: Ergänzende Zutaten müssen zwingend aus der VIP-Liste kommen!
@@ -168,6 +168,7 @@ for food in st.session_state.allowed_foods:
     if cols[1].button("❌", key=f"del_{food}"):
         st.session_state.allowed_foods.remove(food)
         st.rerun()
+
 
 
 
