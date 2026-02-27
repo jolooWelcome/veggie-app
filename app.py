@@ -67,16 +67,27 @@ st.markdown("""
         align-items: center;
     }
 
-    /* ANPASSUNG LÖSCH-BUTTON (Kleiner, Dunkel, Weißes X) */
-    .stButton>button[key^="del_"] {
-        background-color: #31333F !important;
-        color: white !important;
-        border: no boarder !important;
+/* SPEZIAL-STYLING FÜR DIE LÖSCH-BUTTONS */
+    /* Wir suchen alle Buttons, deren interner Name mit 'del_' beginnt */
+    div.stButton > button[key^="del_"] {
+        background-color: #31333F !important; /* Dunkel wie deine Budget-Felder */
+        color: white !important;              /* Das Kreuz wird weiß */
+        border: 1px solid #722F37 !important; /* Ein dezenter Rand in deiner App-Farbe */
         border-radius: 6px !important;
-        height: 35px !important;
-        width: 40px !important; /* Kleiner als die Hauptfelder */
+        height: 35px !important;              /* Schön kompakt */
+        width: 45px !important;               /* Nicht zu breit */
         padding: 0px !important;
-        font-size: 0.9rem !important;
+        line-height: 1 !important;
+        font-weight: bold !important;
+    }
+
+    /* Damit der Button beim Drücken nicht wieder gelb wird */
+    div.stButton > button[key^="del_"]:active, 
+    div.stButton > button[key^="del_"]:focus,
+    div.stButton > button[key^="del_"]:hover {
+        background-color: #454754 !important; /* Etwas heller beim Drüberfahren */
+        color: white !important;
+        border-color: #722F37 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -160,4 +171,5 @@ for food in st.session_state.allowed_foods:
         if st.button("X", key=f"del_{food}"):
             st.session_state.allowed_foods.remove(food)
             st.rerun()
+
 
